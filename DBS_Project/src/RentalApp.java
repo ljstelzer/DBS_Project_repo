@@ -3,6 +3,8 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -217,9 +219,11 @@ public class RentalApp {
     public static void searchRecord(Scanner in, String entity) {
         
         // Prompts user for identifying attribute of chosen entity.
-        System.out.println("Enter the ID of the " + entity + " to search: ");
-        int id = in.nextInt();
-        System.out.println(entity + " record found successfully.");
+        switch (entity) {
+        	case "Customer":
+        		searchCustomer(in);
+        	break;
+        }
         // Add logic to search for the record.
     }
 
@@ -356,10 +360,27 @@ public class RentalApp {
 			System.out.print("Enter the UserID of the customer you would like to search for: ");
 			int userID = in.nextInt();
 			in.nextLine();
-			String sql = "SELECT FROM Customer WHERE UserID = " + Integer.toString(userID);
-			Statement stmt = conn.createStatement();
-			
-			System.out.print("Customer deleted correctly");
+			String sql = "SELECT * FROM Customer WHERE UserID = ?";
+			ps = conn.prepareStatement(sql);
+			ps.setInt(1, userID);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
