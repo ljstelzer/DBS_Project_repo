@@ -178,10 +178,6 @@ public class RentalApp {
                 System.out.println("Invalid action. Please try again.");
         }
     }
-
-    public static void usefulReports(Scanner in) {
-        
-    }
     
     public static void addRecord(Scanner in, String entity) {
        
@@ -386,6 +382,274 @@ public class RentalApp {
 			e.printStackTrace();
 		}
     }
+    
+    public static void usefulReports(Scanner in) {
+    	System.out.println("(1) Renting checkouts. ");
+    	System.out.println("(2) Popular item. ");
+    	System.out.println("(3) Popular manufacturer. ");
+    	System.out.println("(4) Popular drone. ");
+    	System.out.println("(5) Items checked out. ");
+    	System.out.println("(6) Equipment by type of equipment. ");
+    	System.out.print("Please choose the action you would like to perform: ");
+    	int action = in.nextInt();
+    	in.nextLine();
+        switch (action) {
+            case 1:
+                rentingCheckouts(in);
+                break;
+            case 2:
+                popularItem(in);
+                break;
+            case 3:
+                popularManufacturer(in);
+                break;
+            case 4:
+                popularDrone(in);
+                break;
+            case 5:
+                itemsCheckedOut(in);
+                break;
+            case 6:
+            	equipmentType(in);
+            	break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    	
+    }
+    
+    public static void rentingCheckouts(Scanner in) {
+    	String sql = "SELECT Equipment_serial_number, Check_out\r\n"
+    			+ "FROM Rental, Rental_equipment\r\n"
+    			+ "WHERE Rental_equipment.Rental_number = Rental.Rental_number AND CustomerID = ?;\r\n";
+    	try {
+			ps = conn.prepareStatement(sql);
+			System.out.print("Enter the UserID of the customer whose rentals you would like to see: ");
+			int userID = in.nextInt();
+			in.nextLine();
+			ps.setInt(1, userID);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public static void popularItem(Scanner in) {
+    	String sql = "SELECT Serial_number, SUM(julianday(Returns) - julianday(Check_out)) AS Running_rental_time, COUNT(Rental.Rental_number)\r\n"
+    			+ "FROM Equipment JOIN Rental_equipment ON Serial_number = Equipment_serial_number\r\n"
+    			+ "   JOIN Rental ON Rental_equipment.Rental_number = Rental.Rental_number\r\n"
+    			+ "GROUP BY Serial_number\r\n"
+    			+ "ORDER BY Running_rental_time DESC, COUNT(Rental.Rental_number)\r\n"
+    			+ "LIMIT 1;";
+    	try {
+			ps = conn.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public static void popularManufacturer(Scanner in) {
+    	String sql = "SELECT M.ManufacturerID, M.City, M.Phone\r\n"
+    			+ "FROM Manufacturer M\r\n"
+    			+ "JOIN (\r\n"
+    			+ "    SELECT ManufacturerID, COUNT(RE.Rental_number) AS Count_rental_number\r\n"
+    			+ "    FROM Manufacturer M2\r\n"
+    			+ "    LEFT JOIN Equipment E ON E.Manufacturer = M2.ManufacturerID\r\n"
+    			+ "    LEFT JOIN Rental_equipment RE ON E.Serial_number = RE.Equipment_serial_number\r\n"
+    			+ "    GROUP BY M2.ManufacturerID\r\n"
+    			+ ") AS Manufacturer_count_rental ON M.ManufacturerID = Manufacturer_count_rental.ManufacturerID\r\n"
+    			+ "JOIN (\r\n"
+    			+ "    SELECT MAX(Count_rental_number) AS Max_count_rental_number\r\n"
+    			+ "    FROM (\r\n"
+    			+ "        SELECT ManufacturerID, COUNT(RE.Rental_number) AS Count_rental_number\r\n"
+    			+ "        FROM Manufacturer M3\r\n"
+    			+ "        LEFT JOIN Equipment E ON E.Manufacturer = M3.ManufacturerID\r\n"
+    			+ "        LEFT JOIN Rental_equipment RE ON E.Serial_number = RE.Equipment_serial_number\r\n"
+    			+ "        GROUP BY M3.ManufacturerID\r\n"
+    			+ "    ) AS Counted\r\n"
+    			+ ") AS Max_count ON Manufacturer_count_rental.Count_rental_number = Max_count.Max_count_rental_number\r\n"
+    			+ "LIMIT 1;\r\n";
+    	try {
+			ps = conn.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public static void popularDrone(Scanner in) {
+    	String sql = "SELECT \r\n"
+    			+ "    Drone.Serial_number, \r\n"
+    			+ "    SUM(Warehouse_distance) AS Total_Warehouse_Distance, \r\n"
+    			+ "    COUNT(Rental_equipment.Equipment_serial_number) AS Equipment_Count\r\n"
+    			+ "FROM \r\n"
+    			+ "    Drone\r\n"
+    			+ "    LEFT JOIN Rental ON Drone.Serial_number = Rental.Drone_number\r\n"
+    			+ "    LEFT JOIN Customer ON Rental.CustomerID = Customer.UserID\r\n"
+    			+ "    LEFT JOIN Rental_equipment ON Rental.Rental_number = Rental_equipment.Rental_number\r\n"
+    			+ "GROUP BY \r\n"
+    			+ "    Drone.Serial_number\r\n"
+    			+ "ORDER BY \r\n"
+    			+ "    Equipment_Count DESC, \r\n"
+    			+ "    Total_Warehouse_Distance DESC\r\n"
+    			+ "LIMIT 1;";
+    	try {
+			ps = conn.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public static void itemsCheckedOut(Scanner in) {
+    	String sql = "SELECT CustomerID, COUNT(Equipment_serial_number)\r\n"
+    			+ "FROM Rental,Rental_equipment\r\n"
+    			+ "WHERE Rental.Rental_number=Rental_equipment.Rental_number\r\n"
+    			+ "GROUP BY CustomerID\r\n"
+    			+ "HAVING COUNT(Equipment_serial_number) IN (\r\n"
+    			+ "  SELECT MAX(Count_equipment)\r\n"
+    			+ "  FROM(\r\n"
+    			+ "    SELECT COUNT(Equipment_serial_number) AS Count_equipment\r\n"
+    			+ "    FROM Rental,Rental_equipment\r\n"
+    			+ "    WHERE Rental.Rental_number=Rental_equipment.Rental_number\r\n"
+    			+ "    GROUP BY CustomerID \r\n"
+    			+ "    ))\r\n"
+    			+ "LIMIT 1;";
+    	try {
+			ps = conn.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    
+    public static void equipmentType(Scanner in) {
+    	String sql = "SELECT Type, Description\r\n"
+    			+ "FROM Equipment\r\n"
+    			+ "WHERE YEAR < ?\r\n"
+    			+ "GROUP BY Type\r\n"
+    			+ "ORDER BY Year DESC;";
+    	try {
+			ps = conn.prepareStatement(sql);
+			System.out.print("Enter the year you would like to see equipment manufactured before: ");
+			String type = in.nextLine();
+			ps.setString(1, type);
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+        	int columnCount = rsmd.getColumnCount();
+        	for (int i = 1; i <= columnCount; i++) {
+        		String value = rsmd.getColumnName(i);
+        		System.out.print(value);
+        		if (i < columnCount) System.out.print(",  ");
+        	}
+			System.out.print("\n");
+        	while (rs.next()) {
+        		for (int i = 1; i <= columnCount; i++) {
+        			String columnValue = rs.getString(i);
+            		System.out.print(columnValue);
+            		if (i < columnCount) System.out.print(",  ");
+        		}
+    			System.out.print("\n");
+        	}
+        	rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
     
     
 
