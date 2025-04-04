@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 public class RentalApp {
 
-	private static String DATABASE = "DBS_Project_DB.db";
+	private static String DATABASE = "company_db.db";
 	
 	public static Connection conn = null;
 	
