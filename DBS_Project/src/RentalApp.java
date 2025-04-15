@@ -151,7 +151,7 @@ public class RentalApp {
         int action = in.nextInt();
         switch (action) {
             case 1:
-                rentOutEquipment(in);
+                rentEquipment(in);
                 break;
             case 2:
                 returnEquipment(in);
@@ -221,46 +221,6 @@ public class RentalApp {
         	break;
         }
         // Add logic to search for the record.
-    }
-
-
-    public static void rentOutEquipment(Scanner in) {
-        System.out.print("Enter the the ID of the user you would like to rent to: ");
-        int userID = in.nextInt();
-        System.out.print("Enter the the Serial Number of the equipment you would like to rent out: ");
-        int serialNum = in.nextInt();
-        // Add logic to rent out the equipment.
-        System.out.println("Equipment rented out successfully.");
-
-    }
-
-    public static void returnEquipment(Scanner in) {
-        System.out.print("Enter the Serial Number of the equipment you would like to return: ");
-        int serialNum = in.nextInt();
-        // Add logic to return the equipment.
-        System.out.println("Equipment returned successfully.");
-    }
-
-    public static void scheduleDelivery(Scanner in) {
-        System.out.print("Enter the Serial Number of the equipment you would like to deliver: ");
-        int equipSerialNum = in.nextInt();
-        System.out.print("Enter the Serial Number of the drone you would like to complete the delivery: ");
-        int droneSerialNum = in.nextInt();
-        System.out.print("Enter the date you would like to schedule the delivery: ");
-        String date = in.next();
-        // Add logic to schedule delivery.
-        System.out.println("Delivery scheduled successfully.");
-    }
-
-    public static void schedulePickup(Scanner in) {
-        System.out.print("Enter the Serial Number of the equipment you would like to pick up: ");
-        int equipSerialNum = in.nextInt();
-        System.out.print("Enter the Serial Number of the drone you would like to complete the pickup: ");
-        int droneSerialNum = in.nextInt();
-        System.out.print("Enter the date you would like to schedule the pickup: ");
-        String date = in.next();
-        // Add logic to schedule pickup.
-        System.out.println("Pickup scheduled successfully.");
     }
     
     public static void addCustomer(Scanner in) {
@@ -649,6 +609,128 @@ public class RentalApp {
 			e.printStackTrace();
 		}
     }
+    
+    
+    public static void rentEquipment(Scanner in) {
+
+        System.out.print("Enter Rental Number: ");
+        int rentalNumber = in.nextInt();
+        in.nextLine();
+
+        System.out.print("Enter Rental Fee: ");
+        int rentalFee = in.nextInt();
+
+        System.out.print("Enter Customer ID: ");
+        int customerId = in.nextInt();
+
+        System.out.print("Enter Drone Number: ");
+        int droneNumber = in.nextInt();
+
+        System.out.print("Enter Warehouse ID: ");
+        int warehouseId = in.nextInt();
+
+        System.out.print("Enter Equipment-Rental ID: ");
+        int equipmentRentalId = in.nextInt();
+
+        System.out.print("Enter Equipment Serial Number: ");
+        int equipmentSerialNumber = in.nextInt();
+
+        String rentalInsertSQL = "INSERT INTO Rental (Rental_number, Rental_fee, CustomerID, Drone_number, WarehouseID) " +
+                                 "VALUES (?, ?, ?, ?, ?)";
+        String rentalEquipmentInsertSQL = "INSERT INTO Rental_equipment (Equipment_rentalID, Rental_number, Equipment_serial_number) " +
+                                          "VALUES (?, ?, ?)";
+
+        try {
+        
+        	PreparedStatement rentalStmt = conn.prepareStatement(rentalInsertSQL);
+            PreparedStatement rentalEquipmentStmt = conn.prepareStatement(rentalEquipmentInsertSQL);
+
+            rentalStmt.setInt(1, rentalNumber);
+            rentalStmt.setInt(2, rentalFee);
+            rentalStmt.setInt(3, customerId);
+            rentalStmt.setInt(4, droneNumber);
+            rentalStmt.setInt(5, warehouseId);
+            rentalStmt.executeUpdate();
+
+            rentalEquipmentStmt.setInt(1, equipmentRentalId);
+            rentalEquipmentStmt.setInt(2, rentalNumber);
+            rentalEquipmentStmt.setInt(3, equipmentSerialNumber);
+            rentalEquipmentStmt.executeUpdate();
+
+            System.out.println("Equipment successfully checked out.");
+        } catch (SQLException e) {
+            System.err.println("Checkout failed.");
+        }
+        
+    }
+    
+
+    public static void returnEquipment(Scanner in) {
+
+        System.out.print("Enter Rental Number: ");
+        int rentalNumber = in.nextInt();
+        in.nextLine(); // consume newline
+
+        System.out.print("Enter Return Date (YYYY-MM-DD): ");
+        String returnDate = in.nextLine();
+
+        String updateReturnSQL = "UPDATE Rental SET Returns = ? WHERE Rental_number = ?";
+
+        try {
+        	PreparedStatement stmt = conn.prepareStatement(updateReturnSQL);
+            stmt.setString(1, returnDate);
+            stmt.setInt(2, rentalNumber);
+            stmt.executeUpdate();
+            System.out.println("Return successfully recorded.");
+        } catch (SQLException e) {
+            System.err.println("Return failed.");
+        }
+    }
+    
+    public static void scheduleDelivery(Scanner in) {
+
+        System.out.print("Enter Rental Number: ");
+        int rentalNumber = in.nextInt();
+        in.nextLine(); // consume newline
+
+        System.out.print("Enter Delivery Date (YYYY-MM-DD): ");
+        String checkoutDate = in.nextLine();
+
+        String updateCheckoutSQL = "UPDATE Rental SET Check_out = ? WHERE Rental_number = ?";
+
+        try {
+        	PreparedStatement stmt = conn.prepareStatement(updateCheckoutSQL);
+            stmt.setString(1, checkoutDate);
+            stmt.setInt(2, rentalNumber);
+            stmt.executeUpdate();
+            System.out.println("Return successfully recorded.");
+        } catch (SQLException e) {
+            System.err.println("Return failed.");
+        }
+    }
+    
+    public static void schedulePickup(Scanner in) {
+
+        System.out.print("Enter Rental Number: ");
+        int rentalNumber = in.nextInt();
+        in.nextLine(); // consume newline
+
+        System.out.print("Enter Return Date (YYYY-MM-DD): ");
+        String pickupDate = in.nextLine();
+
+        String updatePickupSQL = "UPDATE Rental SET Due_date = ? WHERE Rental_number = ?";
+
+        try {
+        	PreparedStatement stmt = conn.prepareStatement(updatePickupSQL);
+            stmt.setString(1, pickupDate);
+            stmt.setInt(2, rentalNumber);
+            stmt.executeUpdate();
+            System.out.println("Return successfully recorded.");
+        } catch (SQLException e) {
+            System.err.println("Return failed.");
+        }
+    }
+    
     
     
     
